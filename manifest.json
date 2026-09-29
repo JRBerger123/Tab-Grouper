@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Ticket Auto-Grouper",
+  "version": "1.0",
+  "description": "Select or configure ticket tab groups.",
+  "permissions": ["tabs", "tabGroups", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Select Ticket Group"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
