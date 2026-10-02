@@ -546,6 +546,85 @@ async function resetDefaults() {
   showToast('Reset to defaults. Click Save to persist them.');
 }
 
+/* ---------- import / export ---------- */
+function exportConfig() {
+  // Make sure we export exactly what the user sees, including any unsaved edits.
+  currentConfig = collectFromDom();
+
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    ticketConfig: currentConfig
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `ticket-auto-grouper-config-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  showToast('✓ Config exported');
+}
+
+async function importConfig(file) {
+  try {
+    const text = await file.text();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      alert('Import failed: file is not valid JSON.\n\n' + err.message);
+      return;
+    }
+
+    // Accept wrapper { ticketConfig: {...} }, raw { sections: [...] }, or legacy flat map.
+    const candidate =
+      parsed && typeof parsed === 'object' && parsed.ticketConfig && typeof parsed.ticketConfig === 'object'
+        ? parsed.ticketConfig
+        : parsed;
+
+    if (!candidate || typeof candidate !== 'object') {
+      alert('Import failed: file does not contain a recognizable configuration.');
+      return;
+    }
+
+    const normalized = normalizeConfig(candidate);
+    if (normalized.sections.length === 0) {
+      alert('Import failed: configuration contains no sections.');
+      return;
+    }
+
+    const newSections = normalized.sections.length;
+    const newGroups = normalized.sections.reduce((n, s) => n + s.groups.length, 0);
+    const oldSections = currentConfig.sections.length;
+
+    const ok = confirm(
+      `Import this configuration?\n\n` +
+      `Incoming: ${newSections} section(s), ${newGroups} group(s)\n` +
+      `Current:  ${oldSections} section(s)\n\n` +
+      `This will REPLACE what's shown on this page.\n` +
+      `Click Save afterward to persist it.`
+    );
+    if (!ok) return;
+
+    currentConfig = normalized;
+    renderAll();
+
+    document.getElementById('statusText').textContent =
+      `Imported ${newSections} sections / ${newGroups} groups. Click Save to persist.`;
+    showToast('✓ Config imported! Click Save to apply.');
+  } catch (err) {
+    console.error('Import failed:', err);
+    alert('Import failed: ' + (err.message || err));
+  }
+}
+
 function showToast(message) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
@@ -559,6 +638,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('saveBtn').addEventListener('click', saveSettings);
   document.getElementById('addSectionBtn').addEventListener('click', addNewSection);
   document.getElementById('resetBtn').addEventListener('click', resetDefaults);
+  document.getElementById('exportBtn').addEventListener('click', exportConfig);
+  document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) importConfig(file);
+    // Reset so the same file can be re-selected next time
+    e.target.value = '';
+  });
   document.getElementById('newSectionName').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addNewSection();
   });

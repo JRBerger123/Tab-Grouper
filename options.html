@@ -27,7 +27,7 @@
       border-radius: 4px;
       padding: 8px 12px;
       font-size: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -45,6 +45,32 @@
       cursor: pointer;
     }
     .reset-btn:hover { background: #a4262c; }
+
+    /* ---------- Config import / export toolbar ---------- */
+    .config-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cfg-btn {
+      flex: 1;
+      padding: 9px 12px;
+      background: #ffffff;
+      border: 1px solid #c8c6c4;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #333;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .cfg-btn:hover {
+      background: #f3f2f1;
+      border-color: #0078d4;
+      color: #0078d4;
+    }
+    .cfg-btn:active { transform: scale(0.99); }
 
     /* ---------- Add Section card ---------- */
     .add-section-card {
@@ -323,6 +349,12 @@
   <div class="status-bar">
     <span class="grow" id="statusText">Loading…</span>
     <button id="resetBtn" class="reset-btn" title="Wipe storage and restore built-in defaults">Reset to Defaults</button>
+  </div>
+
+  <div class="config-actions">
+    <button id="exportBtn" class="cfg-btn" title="Download a JSON backup of your configuration">⬇ Export Config</button>
+    <button id="importBtn" class="cfg-btn" title="Load a configuration from a JSON file">⬆ Import Config</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
   </div>
 
   <div class="add-section-card">
